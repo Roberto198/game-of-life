@@ -1,31 +1,11 @@
 import {DOTS_STYLE} from './constants';
 import {getCoordinateX, getCoordinateY} from './coordinates';
-
-const vs = `
-  attribute vec4 a_position;
-
-  uniform vec2 u_resolution;
-
-  void main() {
-    vec2 position = a_position.xy / u_resolution * 2.0 - 1.0;
-
-    gl_Position = vec4(position, 0, 1);
-  }
-`;
-
-const fs = `
-  precision mediump float;
-
-  void main() {
-    gl_FragColor = vec4(1, 0, 0.5, 1);
-  }
-`;
+import {vertexShader, fragmentShader} from './shader';
 
 export class GameOfLifeEngine {
   public life: Life[][];
   public canvas: HTMLCanvasElement;
   public context: WebGLRenderingContext;
-  private program: WebGLProgram;
   private readonly x: number;
   private readonly y: number;
   private intervalKey: null | number;
@@ -48,9 +28,9 @@ export class GameOfLifeEngine {
     ctx.clearColor(0, 0, 0, 1);
     ctx.viewport(0, 0, cvs.width, cvs.height);
 
-    const program = this.program = this.createProgram(
-      this.createShader(ctx.VERTEX_SHADER, vs),
-      this.createShader(ctx.FRAGMENT_SHADER, fs),
+    const program = this.createProgram(
+      this.createShader(ctx.VERTEX_SHADER, vertexShader),
+      this.createShader(ctx.FRAGMENT_SHADER, fragmentShader),
     );
     ctx.useProgram(program);
     ctx.bindBuffer(ctx.ARRAY_BUFFER, ctx.createBuffer());
