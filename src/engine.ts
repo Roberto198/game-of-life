@@ -1,4 +1,4 @@
-import {BACKGROUND_COLOR, DOTS_STYLE} from './constants';
+import {DOTS_STYLE} from './constants';
 import {getCoordinateX, getCoordinateY} from './coordinates';
 
 const vs = `
@@ -25,53 +25,41 @@ export class GameOfLifeEngine {
   public life: Life[][];
   public canvas: HTMLCanvasElement;
   public context: WebGLRenderingContext;
+  private program: WebGLProgram;
   private readonly x: number;
   private readonly y: number;
   private intervalKey: null | number;
 
-
-  private program: WebGLProgram;
-
   constructor(life: Life[][]) {
-    const cvs = document.createElement('canvas');
-    const ctx = cvs.getContext('webgl');
+    this.life = life;
     this.x = life[0].length;
     this.y = life.length;
-    this.life = life;
-    this.canvas = cvs;
+
+    const cvs = this.canvas = document.createElement('canvas');
+    const ctx = cvs.getContext('webgl');
+    cvs.width = getCoordinateX(this.x);
+    cvs.height = getCoordinateY(this.y);
 
     if (!ctx) {
       throw 'Failed to create context';
     }
 
     this.context = ctx;
-    cvs.width = getCoordinateX(this.x);
-    cvs.height = getCoordinateY(this.y);
-    ctx.clearColor(
-      BACKGROUND_COLOR.R,
-      BACKGROUND_COLOR.G,
-      BACKGROUND_COLOR.B,
-      BACKGROUND_COLOR.A,
-    );
+    ctx.clearColor(0, 0, 0, 1);
+    ctx.viewport(0, 0, cvs.width, cvs.height);
 
-    const program = this.createProgram(
+    const program = this.program = this.createProgram(
       this.createShader(ctx.VERTEX_SHADER, vs),
       this.createShader(ctx.FRAGMENT_SHADER, fs),
     );
-    this.program = program;
-    //////////////////
-
-    const positionAttributeLocation = ctx.getAttribLocation(this.program, 'a_position');
-    const resolutionUniformLocation = ctx.getUniformLocation(this.program, 'u_resolution');
-    const positionBuffer = ctx.createBuffer();
-    ctx.bindBuffer(ctx.ARRAY_BUFFER, positionBuffer);
-    ctx.viewport(0, 0, cvs.width, cvs.height);
     ctx.useProgram(program);
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, ctx.createBuffer());
+
+    const positionAttributeLocation = ctx.getAttribLocation(program, 'a_position');
+    const resolutionUniformLocation = ctx.getUniformLocation(program, 'u_resolution');
     ctx.enableVertexAttribArray(positionAttributeLocation);
-    ctx.bindBuffer(ctx.ARRAY_BUFFER, positionBuffer);
     ctx.vertexAttribPointer(positionAttributeLocation, 2, ctx.FLOAT, false, 0, 0);
     ctx.uniform2f(resolutionUniformLocation, cvs.width, cvs.height);
-    /////////////////////
   }
 
   public clear(): void {
@@ -113,7 +101,7 @@ export class GameOfLifeEngine {
         coorX + DOTS_STYLE.WIDTH, coorY,
         coorX, coorY + DOTS_STYLE.HEIGHT,
         coorX + DOTS_STYLE.WIDTH, coorY + DOTS_STYLE.HEIGHT,
-      ]),
+      ] as any),
       ctx.STATIC_DRAW
     );
     ctx.drawArrays(ctx.TRIANGLE_STRIP, 0, 4);

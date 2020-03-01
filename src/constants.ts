@@ -6,11 +6,4 @@ export enum DOTS_STYLE {
   SURVIVE_COLOR = '#1C1C1E',
 }
 
-export const BACKGROUND_COLOR = {
-  R: 174,
-  G: 174,
-  B: 178,
-  A: 1,
-};
-
 export const CONTAINER_CLASS_NAME = 'container';
